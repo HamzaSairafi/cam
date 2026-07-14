@@ -33,7 +33,7 @@ class GestureDetector:
         options = mp.tasks.vision.HandLandmarkerOptions(
             base_options=mp.tasks.BaseOptions(model_asset_path=str(self.model_path)),
             running_mode=mp.tasks.vision.RunningMode.VIDEO,
-            num_hands=1,
+            num_hands=2,
             min_hand_detection_confidence=0.7,
             min_hand_presence_confidence=0.6,
             min_tracking_confidence=0.6,
@@ -57,13 +57,16 @@ class GestureDetector:
         gesture_name = "None"
 
         if results.hand_landmarks:
-            hand_landmarks = results.hand_landmarks[0]
+            for hand_landmarks in results.hand_landmarks:
+                if len(hand_landmarks) >= 21:
+                    self._draw_landmarks(frame, hand_landmarks)
 
-            if len(hand_landmarks) >= 21:
-                self._draw_landmarks(frame, hand_landmarks)
-                gesture_name = self._analyze_landmarks(hand_landmarks)
-            else:
-                gesture_name = "Unknown"
+            if len(results.hand_landmarks) == 2:
+                gesture_name = "Two Hands"
+            elif len(results.hand_landmarks) == 1:
+                hand_landmarks = results.hand_landmarks[0]
+                if len(hand_landmarks) >= 21:
+                    gesture_name = self._analyze_landmarks(hand_landmarks)
 
         return gesture_name, frame
 
@@ -111,21 +114,21 @@ class GestureDetector:
         fingers.append(landmarks[16].y < landmarks[14].y)  # Ring Open
         fingers.append(landmarks[20].y < landmarks[18].y)  # Pinky Open
 
-        # Thumb logic check: Determine if Thumb Tip (4) sits well higher than Index MCP joint base (5)
-        thumb_is_up = landmarks[4].y < landmarks[5].y
+        # Determine if the thumb is extended horizontally away from the index finger base
+        thumb_is_open = abs(landmarks[4].x - landmarks[5].x) > 0.08
 
         # Match structural profiles to the target gestures
-        if fingers == [True, True, True, True]:
-            return "Open Palm"
-        elif fingers == [True, True, False, False]:
-            return "Peace Sign"
-        elif fingers == [False, False, False, False]:
-            if thumb_is_up:
-                return "Thumb Up"
-            else:
-                return "Fist"
+        # Call Me: Index, Middle, Ring are folded; Pinky is open; Thumb is open
+        if fingers == [False, False, False, True] and thumb_is_open:
+            return "Call Me"
+        # Pointing: Index is open; Middle, Ring, Pinky are folded; Thumb is open
+        elif fingers == [True, False, False, False] and thumb_is_open:
+            return "Pointing"
+        # One: Index is open; Middle, Ring, Pinky are folded; Thumb is folded
+        elif fingers == [True, False, False, False] and not thumb_is_open:
+            return "One"
 
-        return "Unknown"
+        return "None"
 
     def __del__(self):
         try:

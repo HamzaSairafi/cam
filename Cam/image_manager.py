@@ -11,10 +11,11 @@ class ImageManager:
         )
         # Map detected gestures to their target filenames
         self.gesture_mapping = {
-            "Thumb Up": "thumb.png",
-            "Peace Sign": "peace.png",
-            "Fist": "fist.png",
-            "Open Palm": "palm.png"
+            "Call Me": "Call M.jpg",
+            "Pointing": "pointing.jpg",
+            "One": "one.jpg",
+            "Two Hands": "two hands.jpg",
+            "None": "default.png"
         }
         self.ensure_images_exist()
 

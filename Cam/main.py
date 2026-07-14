@@ -1,3 +1,8 @@
+import warnings
+# Suppress experimental/runtime warnings from NumPy
+warnings.filterwarnings("ignore", category=UserWarning, module="numpy")
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="numpy")
+
 import cv2
 import time
 from gesture_detector import GestureDetector
@@ -42,11 +47,11 @@ def main():
 
             # Separate Viewer Lifecycle Event Controller
             if gesture != last_gesture:
-                if gesture in image_manager.gesture_mapping:
-                    img = image_manager.load_image(gesture)
-                    if img is not None:
-                        cv2.imshow("Gesture Viewer", img)
-                        viewer_window_open = True
+                target_gesture = gesture if gesture in image_manager.gesture_mapping else "None"
+                img = image_manager.load_image(target_gesture)
+                if img is not None:
+                    cv2.imshow("Gesture Viewer", img)
+                    viewer_window_open = True
                 else:
                     # Close the display viewport if gesture is unrecognized/lost
                     if viewer_window_open:
